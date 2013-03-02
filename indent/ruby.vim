@@ -19,7 +19,7 @@ setlocal nosmartindent
 " Now, set up our indentation expression and keys that trigger it.
 setlocal indentexpr=GetRubyIndent(v:lnum)
 setlocal indentkeys=0{,0},0),0],!^F,o,O,e
-setlocal indentkeys+==end,=else,=elsif,=when,=ensure,=rescue,==begin,==end
+setlocal indentkeys+==end,=else,=elsif,=when,=ensure,=rescue,==begin,==end,=public,=private,=protected
 
 " Only define the function once.
 if exists("*GetRubyIndent")
@@ -52,13 +52,14 @@ let s:skip_expr =
 " Regex used for words that, at the start of a line, add a level of indent.
 let s:ruby_indent_keywords = '^\s*\zs\<\%(module\|class\|def\|if\|for' .
       \ '\|while\|until\|else\|elsif\|case\|when\|unless\|begin\|ensure' .
+      \ '\|public\|private\|protected' .
       \ '\|rescue\):\@!\>' .
       \ '\|\%([=,*/%+-]\|<<\|>>\|:\s\)\s*\zs' .
       \    '\<\%(if\|for\|while\|until\|case\|unless\|begin\):\@!\>'
 
 " Regex used for words that, at the start of a line, remove a level of indent.
 let s:ruby_deindent_keywords =
-      \ '^\s*\zs\<\%(ensure\|else\|rescue\|elsif\|when\|end\):\@!\>'
+      \ '^\s*\zs\<\%(public\|private\|protected\|ensure\|else\|rescue\|elsif\|when\|end\):\@!\>'
 
 " Regex that defines the start-match for the 'end' keyword.
 "let s:end_start_regex = '\%(^\|[^.]\)\<\%(module\|class\|def\|if\|for\|while\|until\|case\|unless\|begin\|do\)\>'
@@ -349,6 +350,12 @@ function GetRubyIndent(...)
   " If we have a =begin or =end set indent to first column.
   if match(line, '^\s*\%(=begin\|=end\)$') != -1
     return 0
+  endif
+
+  " If we have a line starting with public, private, or protected,
+  " we will deintent
+  if match(line, '^\s*\%(public\|private\|protected\)$') != -1
+    return indent('.') - &sw
   endif
 
   " If we have a deindenting keyword, find its match and indent to its level.
